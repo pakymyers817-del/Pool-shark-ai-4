@@ -16,17 +16,30 @@ const processFileToBase64 = (file: File): Promise<string> => {
 
 export const analyzePoolShot = async (file: File, playerTarget: PlayerTarget): Promise<ShotAnalysis> => {
   try {
-    const apiKey = process.env.API_KEY;
-    
-    if (!apiKey) {
-      throw new Error("API Key is missing. In Vercel, go to Settings > Environment Variables and add 'API_KEY'.");
+    const apiKey = import.meta.env.VITE_GEMINI_API_KEY || process.env.API_KEY || process.env.GEMINI_API_KEY;
+
+    if (!apiKey || apiKey === 'PLACEHOLDER_API_KEY') {
+      console.warn("No API Key found. Returning Demo Mode data.");
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          resolve({
+            recommendedShot: "DEMO MODE: Cut the 3-ball",
+            reasoning: "We are in DEMO MODE because no API Key was provided. This is a simulated response. In a real game with an API Key, I would calculate the physics of the cut angle.",
+            difficulty: "Medium",
+            cueBallPosition: { x: 50, y: 80 },
+            targetBallPosition: { x: 30, y: 40 },
+            targetPocketPosition: { x: 0, y: 0 },
+            confidenceScore: 0.95
+          });
+        }, 2000);
+      });
     }
 
     const ai = new GoogleGenAI({ apiKey });
     const base64Data = await processFileToBase64(file);
 
-    const targetDescription = playerTarget === 'solids' 
-      ? "Solids (Balls 1-7, colored balls)" 
+    const targetDescription = playerTarget === 'solids'
+      ? "Solids (Balls 1-7, colored balls)"
       : "Stripes (Balls 9-15, white balls with colored stripe)";
 
     const prompt = `
@@ -72,17 +85,17 @@ export const analyzePoolShot = async (file: File, playerTarget: PlayerTarget): P
         responseSchema: {
           type: Type.OBJECT,
           properties: {
-            recommendedShot: { 
-              type: Type.STRING, 
-              description: "A short, punchy title for the shot (e.g., 'Cut the 5-ball into Corner Pocket')" 
+            recommendedShot: {
+              type: Type.STRING,
+              description: "A short, punchy title for the shot (e.g., 'Cut the 5-ball into Corner Pocket')"
             },
-            reasoning: { 
-              type: Type.STRING, 
-              description: "Detailed explanation of why this is the best shot, including english/spin advice if applicable." 
+            reasoning: {
+              type: Type.STRING,
+              description: "Detailed explanation of why this is the best shot, including english/spin advice if applicable."
             },
-            difficulty: { 
-              type: Type.STRING, 
-              enum: ["Easy", "Medium", "Hard", "Expert"] 
+            difficulty: {
+              type: Type.STRING,
+              enum: ["Easy", "Medium", "Hard", "Expert"]
             },
             cueBallPosition: {
               type: Type.OBJECT,
@@ -105,9 +118,9 @@ export const analyzePoolShot = async (file: File, playerTarget: PlayerTarget): P
                 y: { type: Type.NUMBER, description: "Y percentage (0-100) from top" }
               }
             },
-            confidenceScore: { 
-              type: Type.NUMBER, 
-              description: "Confidence in the analysis from 0 to 1" 
+            confidenceScore: {
+              type: Type.NUMBER,
+              description: "Confidence in the analysis from 0 to 1"
             }
           },
           required: ["recommendedShot", "reasoning", "difficulty", "confidenceScore"]

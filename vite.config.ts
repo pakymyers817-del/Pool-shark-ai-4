@@ -12,7 +12,9 @@ export default defineConfig(({ mode }) => {
     plugins: [react()],
     define: {
       // Polyfill process.env.API_KEY for the browser
-      'process.env.API_KEY': JSON.stringify(env.API_KEY),
+      'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY || env.API_KEY || process.env.GEMINI_API_KEY || process.env.API_KEY),
+      // Force expose GEMINI_API_KEY as VITE_GEMINI_API_KEY so the app can see it even if user didn't rename it in Vercel
+      'import.meta.env.VITE_GEMINI_API_KEY': JSON.stringify(env.VITE_GEMINI_API_KEY || env.GEMINI_API_KEY || process.env.GEMINI_API_KEY),
     },
   };
 });
