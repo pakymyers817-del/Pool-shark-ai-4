@@ -1,0 +1,5 @@
+{
+  "name": "Copy of PoolShark AI",
+  "description": "An AI-powered 8-ball pool analysis tool that recommends the optimal shot based on uploaded table layouts using computer vision and geometric reasoning.",
+  "requestFramePermissions": []
+}
